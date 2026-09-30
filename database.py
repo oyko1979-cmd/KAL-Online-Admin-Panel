@@ -1,7 +1,7 @@
 import pyodbc
 import configparser
 from player import Player
-import time
+from item import Item
 
 
 # ----- Cinfigparser setup/loading config from config.ini ----- #
@@ -46,6 +46,24 @@ def windows_connection():
 
 
 # ----- Functions SQL Query ----- #
+def get_player_pid(charname):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT PID
+    FROM kal_db.dbo.Player
+    WHERE Name = ?
+    """, charname)
+
+    result = cursor.fetchone()
+    if not result:
+        return
+
+    return result[0]
+
+
 
 def search_player(charname):
 
@@ -63,9 +81,6 @@ def search_player(charname):
     if result is None:
         return None
 
-    pid = result[1]
-    player_inventory = search_item(pid)
-
     return Player(*result)
 
 def search_item(pid):
@@ -73,7 +88,7 @@ def search_item(pid):
     cursor = connection.cursor()
 
     cursor.execute("""
-    SELECT IID, [Index], Info, Num
+    SELECT IID, [Index], Prefix, Info, Num
     FROM kal_db.dbo.Item
     WHERE PID = ?
     """, pid)
@@ -81,9 +96,21 @@ def search_item(pid):
     result = cursor.fetchall()
     if not result:
         raise Exception("Keine Items gefunden")
+    
+    items = []
 
-    print(result)
-    return result
+    for value in result:
+        item = Item(
+            pid, 
+            value[0],
+            value[1],
+            value[2],
+            value[3],
+            value[4]
+        )
+        items.append(item)
+
+    return items
 
 
 
@@ -132,4 +159,39 @@ def update_player_field(field, value, pid):
     """
 
     cursor.execute(query, value, pid)
+    connection.commit()
+
+
+def update_item_field(iid, field, value):
+    ITEM_FIELDS = {
+        "Prefix": "Prefix",
+        "Info": "Info",
+        "Num": "Num"
+    }
+    column = ITEM_FIELDS[field]
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    query = f"""
+    UPDATE kal_db.dbo.Item
+    SET {column} = ?
+    WHERE IID = ?
+    """
+
+    cursor.execute(query, value, iid)
+    connection.commit()
+
+
+def send_item_to_player(pid, iid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    UPDATE kal_db.dbo.Item
+    SET PID = ?
+    WHERE IID = ?
+    """, pid, iid
+    )
+
     connection.commit()

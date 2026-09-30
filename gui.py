@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QScrollArea, QLineEdit, QGridLayout, QInputDialog
-from PySide6.QtGui import QPainter, QPixmap
-from PySide6.QtCore import Qt
-import sys
-from player import Player
 from database import search_player, search_item, update_player_field
+from PySide6.QtGui import QPainter, QPixmap
+from item_gui import InventoryWidget
+from PySide6.QtCore import Qt
+from player import Player
+import sys
 
 
 # ----- Background Widget ----- #
@@ -37,13 +38,16 @@ app = QApplication(sys.argv)
 
 # ----- Main Window ----- #
 window = QWidget()
-window.setWindowTitle("KAL Online Admin Panel v0.1")
+window.setWindowTitle("KAL Online Admin Panel v0.5")
 window.resize(900, 600)
 
 
 # ----- Main Layout ----- #
 layout = QVBoxLayout()
 window.setLayout(layout)
+
+inventory = InventoryWidget()
+
 
 # ----- Player Search ----- #
 search_layout = QHBoxLayout()
@@ -404,6 +408,8 @@ player_layout.addLayout(right_layout)
 # ----- Add Scroll Area to Main Layout ----- #
 layout.addWidget(scroll_area)
 
+layout.addWidget(inventory)
+
 
 
 # ----- Functions ----- #
@@ -420,6 +426,7 @@ def change_value(field, pid):
 
 
 def search_button_clicked():
+    inventory.clear_items()
 
     global current_player
 
@@ -430,6 +437,8 @@ def search_button_clicked():
         return
 
     current_player = result
+    items = search_item(current_player.pid)
+    inventory.show_items(items)
     show_player(current_player)
 
 
