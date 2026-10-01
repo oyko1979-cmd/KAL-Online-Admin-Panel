@@ -38,7 +38,7 @@ app = QApplication(sys.argv)
 
 # ----- Main Window ----- #
 window = QWidget()
-window.setWindowTitle("KAL Online Admin Panel v0.5")
+window.setWindowTitle("KAL Online Admin Panel v0.6")
 window.resize(900, 600)
 
 

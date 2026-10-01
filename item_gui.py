@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea, QPushButton, QDialog, QComboBox, QLineEdit
 from item import Item
-from database import update_item_field, get_player_pid, send_item_to_player
+from database import update_item_field, get_player_pid, send_item_to_player, delete_item
 
 
 class ItemRow(QWidget):
@@ -14,6 +14,7 @@ class ItemRow(QWidget):
 
         self.change_button = QPushButton("Change")
         self.send_button = QPushButton("Send")
+        self.delete_button = QPushButton("Delete")
 
         self.iid_value = QLabel(str(item.iid))
         self.index_value = QLabel(str(item.index))
@@ -29,9 +30,33 @@ class ItemRow(QWidget):
 
         self.row_layout.addWidget(self.change_button)
         self.row_layout.addWidget(self.send_button)
+        self.row_layout.addWidget(self.delete_button)
 
         self.change_button.clicked.connect(self.change_item)
         self.send_button.clicked.connect(self.send_item_dialog)
+        self.delete_button.clicked.connect(self.delete_item_dialog)
+
+
+    def delete_item_dialog(self):
+        pid = self.item.pid
+        iid = self.item.iid
+
+        self.delete_dialog = QDialog(self)
+        self.delete_dialog.setWindowTitle("Delete Item")
+        self.delete_dialog.resize(300, 150)
+
+        delete_dialog_layout = QVBoxLayout()
+        self.delete_dialog.setLayout(delete_dialog_layout)
+
+        self.confirm_label = QLabel("Are you sure you want to delete?")
+        self.confirm_button = QPushButton("Delete")
+
+        delete_dialog_layout.addWidget(self.confirm_label)
+        delete_dialog_layout.addWidget(self.confirm_button)
+
+        self.confirm_button.clicked.connect(lambda: self.confirm_label.setText("Item deleted!") if delete_item(iid, pid) else None)
+
+        self.delete_dialog.exec()
 
 
     def send_item_dialog(self):
@@ -127,6 +152,7 @@ class InventoryWidget(QWidget):
         num_label = QLabel("Num")
         change_button_label = QLabel("Change")
         send_button_label = QLabel("Send")
+        delete_button_label = QLabel("Delete Item")
 
         self.label_layout.addWidget(iid_label)
         self.label_layout.addWidget(index_label)
@@ -136,6 +162,7 @@ class InventoryWidget(QWidget):
 
         self.label_layout.addWidget(change_button_label)
         self.label_layout.addWidget(send_button_label)
+        self.label_layout.addWidget(delete_button_label)
 
         self.inventory_layout.addLayout(self.label_layout)
         self.inventory_layout.addWidget(self.scroll_area)

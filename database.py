@@ -195,3 +195,18 @@ def send_item_to_player(pid, iid):
     )
 
     connection.commit()
+
+
+def delete_item(iid, pid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    DELETE FROM kal_db.dbo.Item
+    WHERE IID = ?
+    AND PID = ?
+    """, iid, pid)
+
+    connection.commit()
+    return True
+
