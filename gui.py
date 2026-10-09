@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QScrollArea, QLineEdit, QGridLayout, QInputDialog
-from database import search_player, search_item, update_player_field
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QScrollArea, QLineEdit, QGridLayout, QInputDialog, QDialog
+from database import search_player, search_item, update_player_field, block_player, is_blocked, unblock_player, get_player_uid, send_player
 from PySide6.QtGui import QPainter, QPixmap
 from item_gui import InventoryWidget
 from PySide6.QtCore import Qt
@@ -38,7 +38,7 @@ app = QApplication(sys.argv)
 
 # ----- Main Window ----- #
 window = QWidget()
-window.setWindowTitle("KAL Online Admin Panel v0.6")
+window.setWindowTitle("KAL Online Admin Panel v0.8")
 window.resize(900, 600)
 
 
@@ -57,9 +57,21 @@ search_input.setMaximumWidth(250)
 search_button = QPushButton("Search")
 search_button.setMaximumWidth(80)
 
+# ----- Block Player Button ----- #
+block_player_button = QPushButton("Block Player")
+block_player_button.setMaximumWidth(80)
+# -----                     ----- #
+
+# ----- Send Character Button ----- #
+send_character_button = QPushButton("Send Char")
+send_character_button.setMaximumWidth(80)
+
+
 search_layout.addWidget(search_label)
 search_layout.addWidget(search_input)
 search_layout.addWidget(search_button)
+search_layout.addWidget(block_player_button)
+search_layout.addWidget(send_character_button)
 
 search_layout.addStretch()
 
@@ -441,6 +453,57 @@ def search_button_clicked():
     inventory.show_items(items)
     show_player(current_player)
 
+    uid = current_player.uid
+    blockinfo = is_blocked(uid)
+
+    if blockinfo == 2:
+        block_player_button.setText("Unblock")
+
+
+def block_button_clicked():
+    uid = current_player.uid
+
+    # button check block or unblock -> then do eitehr way block or unblock function trigger
+    check = block_player_button.text()
+
+    if check == "Unblock":
+        unblock_player(uid)
+        block_player_button.setText("Block Player")
+    if check == "Block Player":
+        block_player(uid)
+        block_player_button.setText("Unblock")
+
+
+def send_char_button_clicked():
+    pid = current_player.pid
+    print("Selected Player PID:", pid)
+
+    send_char_dialog = QDialog()
+    send_char_dialog.setWindowTitle("Send Character")
+    send_char_dialog.resize(300, 150)
+
+    send_char_dialog_layout = QVBoxLayout()
+    send_char_dialog.setLayout(send_char_dialog_layout)
+
+    send_char_button = QPushButton("Send to Playername")
+    send_char_input = QLineEdit()
+
+    send_char_dialog_layout.addWidget(send_char_input)
+    send_char_dialog_layout.addWidget(send_char_button)
+
+    def send_character():
+        target_name = send_char_input.text()
+
+        target_uid = get_player_uid(target_name)
+
+        send_player(target_uid, pid)
+        send_char_input.setText(f"Char was sent to UID: {target_uid}")
+
+    send_char_button.clicked.connect(send_character)
+
+    send_char_dialog.exec()
+
+
 
 def show_player(player):
 
@@ -471,6 +534,8 @@ def show_player(player):
     z_value.setText(str(player.z))
 
 search_button.clicked.connect(search_button_clicked)
+block_player_button.clicked.connect(block_button_clicked)
+send_character_button.clicked.connect(send_char_button_clicked)
 
 admin_button.clicked.connect(lambda: change_value("Admin", current_player.pid))
 name_button.clicked.connect(lambda: change_value("Name", current_player.pid))

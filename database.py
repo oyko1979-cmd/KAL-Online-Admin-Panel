@@ -64,6 +64,24 @@ def get_player_pid(charname):
     return result[0]
 
 
+def get_player_uid(charname):
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT UID
+    FROM kal_db.dbo.Player
+    WHERE Name = ?
+    """, charname)
+
+    result = cursor.fetchone()
+    if not result:
+        return
+
+    return result[0]
+
+
 
 def search_player(charname):
 
@@ -206,6 +224,64 @@ def delete_item(iid, pid):
     WHERE IID = ?
     AND PID = ?
     """, iid, pid)
+
+    connection.commit()
+    return True
+
+
+def block_player(uid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    UPDATE kal_auth.dbo.Login
+    SET Type = 2
+    WHERE UID = ?
+    """, uid)
+
+    connection.commit()
+    return True
+
+
+def unblock_player(uid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    UPDATE kal_auth.dbo.Login
+    SET Type = 0
+    WHERE UID = ?
+    """, uid)
+
+    connection.commit()
+    return True
+
+
+def is_blocked(uid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT Type
+    FROM kal_auth.dbo.Login
+    WHERE UID = ?
+    """, uid)
+
+    result = cursor.fetchone()
+
+    if result:
+        return result[0]
+
+
+def send_player(uid, pid):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    UPDATE kal_db.dbo.Player
+    SET UID = ?
+    WHERE PID = ?
+    """, uid, pid)
 
     connection.commit()
     return True
